@@ -15,17 +15,27 @@ public class GameVisualManager : NetworkBehaviour
 
     private void GameManager_OnClickedGridPosition(object sender, GameManager.OnClickedGridPositionEventArgs e)
     {
-        SpawnObjectRpc(e.x,e.y);
+        SpawnObjectRpc(e.x,e.y,e.playerType);
     }
     [Rpc(SendTo.Server)]
-    void SpawnObjectRpc(int x, int y)
+    void SpawnObjectRpc(int x, int y,GameManager.PlayerType playerType)
     {
-        Transform visual = Instantiate(_crossGO);
+        Transform visualGO = null;
 
-        visual.GetComponent<NetworkObject>().Spawn(true);
+        switch(playerType)
+        {
+            case GameManager.PlayerType.cross:
+            visualGO = _crossGO;
+            break;
 
-        visual.position = GetWorldGridPosition(x,y);
-        
+            case GameManager.PlayerType.circle:
+            visualGO = _circleGO;
+            break;
+        }
+
+        Transform visual = Instantiate(visualGO,GetWorldGridPosition(x,y),Quaternion.identity);
+
+        visual.GetComponent<NetworkObject>().Spawn(true);        
     }
 
     private Vector2 GetWorldGridPosition(int x,int y)
