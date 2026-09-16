@@ -15,6 +15,9 @@ public class GameManager : NetworkBehaviour
         public PlayerType playerType;
     }
 
+    public event EventHandler OnGameStart;
+    public event EventHandler OnCurrentPlayerTypeChanged;
+
     public enum PlayerType
     {
         none,
@@ -22,11 +25,8 @@ public class GameManager : NetworkBehaviour
         circle
     }
 
-    [SerializeField]PlayerType _localPlayerType;
-    [SerializeField]PlayerType _currentPlayerType;
-
-
-
+    PlayerType _localPlayerType;
+    NetworkVariable<PlayerType> _currentPlayerType = new NetworkVariable<PlayerType>();
     void Awake()
     {
         Instance = this;
@@ -45,14 +45,32 @@ public class GameManager : NetworkBehaviour
 
         if (IsServer)
         {
-            _currentPlayerType = PlayerType.cross;
+            NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_OnClientConnectedCallback;
         }
 
+        _currentPlayerType.OnValueChanged += (PlayerType oldPlayerType,PlayerType newPlayerType) =>
+        {
+            OnCurrentPlayerTypeChanged?.Invoke(this,EventArgs.Empty);
+        };
     }
+        void NetworkManager_OnClientConnectedCallback(ulong obj)
+        {
+            if(NetworkManager.Singleton.ConnectedClientsList.Count == 2)
+            {
+                _currentPlayerType.Value = PlayerType.cross;
+                OnGameStartRpc();
+            }
+        }
+    [Rpc(SendTo.ClientsAndHost)]
+    void OnGameStartRpc()
+    {
+        OnGameStart?.Invoke(this,EventArgs.Empty);
+    }
+
     [Rpc(SendTo.Server)]
     public void ClickedOnGridPositionRpc(int x, int y,PlayerType playerType)
     {
-        if(playerType != _currentPlayerType)
+        if(playerType != _currentPlayerType.Value)
         {
             //not your turn
             return;
@@ -65,19 +83,25 @@ public class GameManager : NetworkBehaviour
             playerType = playerType
         });
 
-        switch (_currentPlayerType)
+        switch (_currentPlayerType.Value)
         {
             case PlayerType.cross:
-                _currentPlayerType = PlayerType.circle;
+                _currentPlayerType.Value = PlayerType.circle;
             break; 
             case PlayerType.circle:
-                _currentPlayerType = PlayerType.cross;
+                _currentPlayerType.Value = PlayerType.cross;
             break;
         }
     }
+    
 
     public PlayerType GetLocalPlayerType()
     {
         return _localPlayerType;
+    }
+
+    public PlayerType GetCurrentPlayerType()
+    {
+        return _currentPlayerType.Value;
     }
 }
