@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,10 +8,17 @@ public class GameVisualManager : NetworkBehaviour
 
     [SerializeField] Transform _crossGO;
     [SerializeField] Transform _circleGO;
+    [SerializeField] Transform _winLine;
 
     void Start()
     {
         GameManager.Instance.OnClickedGridPosition += GameManager_OnClickedGridPosition;
+        GameManager.Instance.OnGameWin += GameManager_OnGameWin;
+    }
+    private void GameManager_OnGameWin(object sender, GameManager.OnGameWinEventArgs e)
+    {
+        Transform spawnedLine =Instantiate(_winLine,GetWorldGridPosition(e.centre.x,e.centre.y),Quaternion.identity);
+        spawnedLine.GetComponent<NetworkObject>().Spawn();
     }
 
     private void GameManager_OnClickedGridPosition(object sender, GameManager.OnClickedGridPositionEventArgs e)

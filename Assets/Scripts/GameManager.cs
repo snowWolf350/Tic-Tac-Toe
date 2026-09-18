@@ -18,6 +18,12 @@ public class GameManager : NetworkBehaviour
     public event EventHandler OnGameStart;
     public event EventHandler OnCurrentPlayerTypeChanged;
 
+    public event EventHandler<OnGameWinEventArgs> OnGameWin;
+    public class OnGameWinEventArgs : EventArgs
+    {
+        public Vector2Int centre;
+    }
+
     public enum PlayerType
     {
         none,
@@ -27,9 +33,11 @@ public class GameManager : NetworkBehaviour
 
     PlayerType _localPlayerType;
     NetworkVariable<PlayerType> _currentPlayerType = new NetworkVariable<PlayerType>();
+    PlayerType[,] _playerTypeArray;
     void Awake()
     {
         Instance = this;
+        _playerTypeArray = new PlayerType[3,3];
     }
 
     public override void OnNetworkSpawn()
@@ -76,6 +84,14 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
+        if(_playerTypeArray[x,y] != PlayerType.none)
+        {
+            //adready occupied
+            return;
+        }
+
+        _playerTypeArray[x,y] = playerType;
+
         OnClickedGridPosition?.Invoke(this,new OnClickedGridPositionEventArgs
         {
             x = x,
@@ -91,6 +107,31 @@ public class GameManager : NetworkBehaviour
             case PlayerType.circle:
                 _currentPlayerType.Value = PlayerType.cross;
             break;
+        }
+
+        TestWin();
+    }
+
+    bool TestLine(PlayerType playertypeA,PlayerType playertypeB,PlayerType playertypeC)
+    {
+        if(playertypeA != PlayerType.none && 
+        playertypeA == playertypeB &&
+        playertypeB == playertypeC)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    void TestWin()
+    {
+        if(TestLine(_playerTypeArray[0,0],_playerTypeArray[1,0],_playerTypeArray[2,0]))
+        {
+            Debug.Log("Win");
+            OnGameWin?.Invoke(this,new OnGameWinEventArgs
+            {
+               centre = new Vector2Int(1,0) 
+            });
         }
     }
     

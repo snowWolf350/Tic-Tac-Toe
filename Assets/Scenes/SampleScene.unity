@@ -2595,6 +2595,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   _crossGO: {fileID: 6731803193401392328, guid: dd89c08b7087e8538b80d4917b704466, type: 3}
   _circleGO: {fileID: 6731803193401392328, guid: 51d18d5a02a3856d393231a2587df0a9, type: 3}
+  _winLine: {fileID: 2359549413566183796, guid: e7aa46186bbd671368ce7f599bf858fa, type: 3}
 --- !u!4 &1410647045
 Transform:
   m_ObjectHideFlags: 0
